@@ -223,10 +223,66 @@ seedInitialData();
 
 // Storage Service Facade
 const storageService = {
+  // Database Seeding for MongoDB
+  async seedDatabase() {
+    if (!isDbConnected()) return;
+
+    try {
+      // 1. Seed Admin
+      const existingAdmin = await User.findOne({ email: 'admin@learnup.com' });
+      let adminId = existingAdmin?._id;
+
+      if (!existingAdmin) {
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash('admin123', salt);
+        const newAdmin = await User.create({
+          name: 'Tournament Director',
+          email: 'admin@learnup.com',
+          passwordHash,
+          role: 'superadmin',
+          institution: 'BUFT',
+          isActive: true,
+        });
+        adminId = newAdmin._id;
+        console.log('✅ [MongoDB Seed] Created default host admin: admin@learnup.com');
+      }
+
+      // 2. Seed Sample Quizzes if none exist
+      const quizCount = await Quiz.countDocuments();
+      if (quizCount === 0) {
+        for (const [id, qData] of memoryStore.quizzes.entries()) {
+          const { _id, ...cleanQuiz } = qData;
+          const createdQuiz = await Quiz.create({
+            ...cleanQuiz,
+            createdBy: adminId || 'usr_admin_001',
+          });
+
+          // Insert questions for this quiz
+          const quizQuestions = Array.from(memoryStore.questions.values()).filter(ques => ques.quizId === id);
+          for (const q of quizQuestions) {
+            const { _id: qId, quizId, ...cleanQuestion } = q;
+            await Question.create({
+              ...cleanQuestion,
+              quizId: createdQuiz._id,
+            });
+          }
+        }
+        console.log('✅ [MongoDB Seed] Seeded official BUFT tournament quizzes and questions.');
+      }
+    } catch (err) {
+      console.error('⚠️ [MongoDB Seed Error]', err.message);
+    }
+  },
+
   // Users
   async findUserByEmail(email) {
     if (isDbConnected()) {
-      return await User.findOne({ email: email.toLowerCase() });
+      let user = await User.findOne({ email: email.toLowerCase() });
+      if (!user && email.toLowerCase() === 'admin@learnup.com') {
+        await this.seedDatabase();
+        user = await User.findOne({ email: email.toLowerCase() });
+      }
+      return user;
     }
     for (const user of memoryStore.users.values()) {
       if (user.email.toLowerCase() === email.toLowerCase()) {
@@ -263,6 +319,10 @@ const storageService = {
   // Quizzes
   async getQuizzes(creatorId) {
     if (isDbConnected()) {
+      const count = await Quiz.countDocuments();
+      if (count === 0) {
+        await this.seedDatabase();
+      }
       const filter = creatorId ? { createdBy: creatorId } : {};
       const quizzes = await Quiz.find(filter).sort({ createdAt: -1 }).lean();
       for (const q of quizzes) {

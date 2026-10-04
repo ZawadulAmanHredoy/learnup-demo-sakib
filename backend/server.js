@@ -61,6 +61,8 @@ app.use((err, req, res, next) => {
   });
 });
 
+const storageService = require('./services/storageService');
+
 // Initialize Socket Engine
 setupGameSockets(io);
 
@@ -69,6 +71,7 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   await connectDB();
+  await storageService.seedDatabase();
 
   server.listen(PORT, () => {
     console.log(`\n=============================================================`);
