@@ -568,7 +568,8 @@ function buildFinalSummary(participant, { totalQuestions, totalTeams }) {
     correct,
     incorrect,
     missed: Math.max(0, totalQuestions - answered),
-    accuracyPct: totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0,
+    // Buzzer-round answers also count as correct, so cap at 100%
+    accuracyPct: totalQuestions > 0 ? Math.min(100, Math.round((correct / totalQuestions) * 100)) : 0,
     averageResponseTimeMs: p.averageResponseTimeMs || 0,
     bestQuestionScore: p.bestQuestionScore || 0,
   };

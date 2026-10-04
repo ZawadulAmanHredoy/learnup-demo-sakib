@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
 import { apiRequest } from '../../utils/api';
+import { API_BASE } from '../../utils/config';
 import { sound } from '../../utils/audio';
 import { 
   Play, Lock, Eye, BarChart3, ChevronRight, Users, Tv, 
@@ -312,7 +313,7 @@ export default function HostCockpit() {
 
           {/* Excel Export */}
           <a
-            href={`http://localhost:5000/api/rooms/${pin}/export`}
+            href={`${API_BASE}/rooms/${pin}/export`}
             download
             className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition"
             title="Download Excel Report"

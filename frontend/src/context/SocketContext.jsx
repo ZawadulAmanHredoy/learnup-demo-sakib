@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import { SERVER_URL } from '../utils/config';
 
 const SocketContext = createContext(null);
 
@@ -8,9 +9,10 @@ export function SocketProvider({ children }) {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
+      reconnectionAttempts: Infinity, // Venue Wi-Fi drops are normal — keep trying
+      reconnectionDelayMax: 5000,
       reconnectionDelay: 1000,
     });
 

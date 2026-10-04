@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from './config';
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('learnup_admin_token');
