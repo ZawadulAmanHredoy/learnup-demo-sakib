@@ -85,3 +85,20 @@ Assigned To:
 | **REL-02** | Dev 2 | P0 | Persist `sessionToken` in `localStorage` on mobile join | [x] | Token persists across page reloads and tab closures. |
 | **REL-03** | Dev 1 | P1 | Build Excel / CSV export service (`/api/rooms/:pin/export`) | [x] | Downloads valid `.xlsx` file with team scores, accuracy, and latency. |
 | **REL-04** | Both | P0 | Run 500-client simulated load test and end-to-end dress rehearsal | [x] | Zero crashes, sub-50ms sync verified with 500 active sockets. |
+
+---
+
+## 2. Developer 2 Delivery Notes (Player Experience & Live Engine)
+
+| Area | Where | Verified by |
+| :--- | :--- | :--- |
+| Participant registration (server-issued UUID v4, validation, race-safe unique team names) | `backend/sockets/playerSocket.js` | `npm test` — registration & duplicate-name cases |
+| In-memory ingest buffer → single bulk insert on lock | `backend/services/submissionBuffer.js`, `liveEngine.flushQuestion` | unit + integration tests |
+| Authoritative timer, pause/resume, 1000 ms late-packet grace | `backend/services/timerService.js`, `liveEngine.lockQuestion` | `TIME_UP`, `HOST_LOCK`, `PAUSED`, `EXPIRED` cases |
+| Scoring & streaks, negative marking, Rules §3 tie-breaks | `backend/services/scoringService.js` | Rules §1.1 worked example (1104 pts), tie-break ordering |
+| Atomic buzzer lockout with re-open exclusions | `backend/services/buzzerService.js` | 100 simultaneous buzzes → exactly 1 winner |
+| Reconnection & state hydration | `room:reconnect`, `liveEngine.getPlayerSnapshot` | mid-question reload restores cards / "Answer Recorded" |
+| Player PWA (join, lobby, 4-color cards, buzzer, result & rank banners, final summary) | `frontend/src/pages/play`, `frontend/src/components/player`, `frontend/src/hooks` | Browser run with 2 phone-sized clients + scripted host |
+
+Run `npm test` from the repo root for the backend suite. New/extended socket events are listed in [TechSpec.md §2](./TechSpec.md).
+

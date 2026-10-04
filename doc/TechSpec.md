@@ -57,7 +57,12 @@ Communication is partitioned into distinct Socket.IO rooms by PIN (`room:pin`).
 | `room:join` | Player $\rightarrow$ Server | `{ pin, teamName, institution, captainName, contactPhone, sessionToken }` | Contestant enters room lobby. |
 | `room:joined_ack` | Server $\rightarrow$ Player | `{ success: true, participantId, sessionToken, currentRoomState }` | Returns assigned participant ID and current room state. |
 | `room:reconnect` | Player $\rightarrow$ Server | `{ pin, sessionToken }` | Auto-invoked on network reconnection or page refresh. |
-| `room:player_list` | Server $\rightarrow$ Admin/Stage | `{ totalCount, participants: [{ teamName, institution }] }` | Broadcast to lobby display when a team joins or leaves. |
+| `room:reconnected_ack` | Server $\rightarrow$ Player | `{ success, participant, roomStatus, snapshot, buzzer, finalSummary?, serverTime }` or `{ success: false, reason }` | Restores the exact screen: `snapshot.phase` (`COUNTDOWN`/`ACTIVE`/`PAUSED`/`CLOSING`/`LOCKED`/`REVEALED`), the sanitized question with `serverDeadline`/`remainingMs`, `hasAnswered` + `selectedOptionId`, and the private result if already revealed. Failure reasons: `SESSION_NOT_FOUND`, `ROOM_NOT_FOUND`, `DISQUALIFIED`, `INVALID_SESSION`. |
+| `room:player_list` | Server $\rightarrow$ Admin/Stage | `{ totalCount, participants: [{ id, teamName, institution, score, rank, isConnected }] }` | Sent to the `:host` and `:stage` channels only (debounced 200 ms). Never contains session tokens or phone numbers. |
+| `player:leave` | Player $\rightarrow$ Server | — | Unbinds this device from its team (team stays registered). |
+| `time:sync` | Player $\rightarrow$ Server (ack) | `{ clientSentAt }` $\rightarrow$ `{ clientSentAt, serverTime }` | NTP-style probe; client keeps the lowest-RTT sample: `offset = serverTime − (sent + received) / 2`. |
+
+**Registration rules (`room:join`)**: the server issues the `sessionToken` (UUID v4). `room:joined_ack` failures carry `error` + human `message`: `INVALID_PIN`, `INVALID_TEAMNAME`, `INVALID_INSTITUTION`, `INVALID_CAPTAINNAME`, `INVALID_PHONE`, `ROOM_NOT_FOUND`, `ROOM_CLOSED`, `ROOM_FULL`, `LATE_JOIN_DISABLED`, `TEAM_NAME_TAKEN` (case-insensitive, race-safe), `DISQUALIFIED`. After join/reconnect the socket is **bound** to that team; answers and buzzes are attributed to the binding, never to a token in the payload.
 | `room:kick` | Admin $\rightarrow$ Server | `{ pin, participantId, reason }` | Admin boots a participant. Target socket is disconnected. |
 
 ---
@@ -70,14 +75,20 @@ Communication is partitioned into distinct Socket.IO rooms by PIN (`room:pin`).
 | `sync:countdown` | Server $\rightarrow$ Room | `{ durationMs: 3000, serverTimestamp }` | Signals 3-second ready countdown on all screens. |
 | `sync:question_active` | Server $\rightarrow$ Room | `{ questionIndex, questionText, type, media, options, timeLimitSec, serverDeadline }` | **Crucial:** Options contain `id` and `text` only. `isCorrect` is strictly omitted. |
 | `player:submit_answer` | Player $\rightarrow$ Server | `{ pin, sessionToken, questionId, selectedOptionId, clientSentAt }` | Player submits selected choice. |
-| `player:answer_ack` | Server $\rightarrow$ Player | `{ received: true, timeTakenMs }` | Immediate receipt confirmation to client. |
+| `player:answer_ack` | Server $\rightarrow$ Player | `{ success: true, received: true, timeTakenMs, selectedOptionId }` or `{ success: false, reason }` | Immediate receipt confirmation (also delivered as the emit ack callback). Teammates' devices receive a copy with `fromTeammate: true`. Reasons: `EXPIRED`, `ALREADY_SUBMITTED`, `PAUSED`, `NOT_STARTED`, `INVALID_OPTION`, `STALE_QUESTION`, `DISQUALIFIED`, `NOT_JOINED`. |
+| `host:live_telemetry` | Server $\rightarrow$ Admin/Stage | `{ answeredCount, totalCount, distribution }` | Sent to `:host` and `:stage` only — players never see the live distribution. |
 | `host:lock_question` | Admin $\rightarrow$ Server | `{ pin }` | Host triggers early answer cutoff. |
-| `sync:question_locked` | Server $\rightarrow$ Room | `{ totalAnswersReceived, serverLockedAt }` | All answer inputs disabled across clients. |
+| `host:pause_timer` / `host:resume_timer` | Admin $\rightarrow$ Server | `{ pin }` | Freeze / resume the authoritative countdown. Paused time is excluded from response time. |
+| `sync:timer_paused` | Server $\rightarrow$ Room | `{ remainingMs, serverTime }` | Inputs disabled, "Competition Paused by Host" banner. |
+| `sync:timer_resumed` | Server $\rightarrow$ Room | `{ serverDeadline, remainingMs, serverTime }` | New deadline after the pause. |
+| `sync:question_locked` | Server $\rightarrow$ Room | `{ totalAnswersReceived, serverLockedAt, reason }` | All answer inputs disabled across clients. `reason`: `TIME_UP`, `ALL_ANSWERED`, `HOST_LOCK`, `HOST_REVEAL`, `SUPERSEDED`. Packets already in flight are still accepted for 1000 ms (except `ALL_ANSWERED`); later ones get `EXPIRED`. |
 | `host:reveal_answer` | Admin $\rightarrow$ Server | `{ pin }` | Host initiates reveal. |
 | `sync:answer_reveal` | Server $\rightarrow$ Room | `{ correctOptionId, explanation, distribution: { [optionId]: count } }` | Transmits correct answer and aggregate stats. |
-| `sync:player_result` | Server $\rightarrow$ Single Player | `{ isCorrect, pointsEarned, speedBonus, currentScore, rank }` | Private evaluation sent to each participant. |
+| `sync:player_result` | Server $\rightarrow$ Single Player | `{ isCorrect, missed, selectedOptionId, correctOptionId, correctOptionText, pointsEarned, basePoints, speedBonus, streakBonus, penaltyPoints, multiplier, streak, badge, timeTakenMs, currentScore, rank, previousRank, rankDelta, totalTeams }` | Private evaluation sent to each team's private channel (`{pin}:player:{sessionToken}`). `basePoints + speedBonus + streakBonus = pointsEarned`. |
 | `host:show_leaderboard`| Admin $\rightarrow$ Server | `{ pin }` | Host triggers leaderboard view. |
-| `sync:leaderboard` | Server $\rightarrow$ Room | `{ topTen: [{ rank, teamName, score, delta }], totalTeams }` | Stage and players view current tournament rankings. |
+| `sync:leaderboard` | Server $\rightarrow$ Room | `{ topTen: [{ rank, teamName, score, delta }], totalTeams }` | Stage and players view current tournament rankings (Rules §3 tie-break order). |
+| `sync:player_rank` | Server $\rightarrow$ Single Player | `{ rank, totalTeams, score, delta, streak, isLastQuestion }` | Personal rank banner on the leaderboard step. |
+| `sync:player_final_summary` | Server $\rightarrow$ Single Player | `{ teamName, institution, totalScore, rank, totalTeams, totalQuestions, answered, correct, incorrect, missed, accuracyPct, averageResponseTimeMs, bestQuestionScore }` | Sent with the final leaderboard; also returned in `room:reconnected_ack` once the room is `FINISHED`. |
 
 ---
 
@@ -89,7 +100,14 @@ Communication is partitioned into distinct Socket.IO rooms by PIN (`room:pin`).
 | `sync:buzzer_ready` | Server $\rightarrow$ Room | `{ questionId, unlockedAt }` | Mobile screens illuminate giant buzzer button. |
 | `player:buzz` | Player $\rightarrow$ Server | `{ pin, sessionToken, clientTimestamp }` | Contestant hits buzzer. |
 | `sync:buzzer_locked` | Server $\rightarrow$ Room | `{ winnerTeamId, winnerTeamName, reactionTimeMs }` | Broadcast to all clients. Winner gets the floor; others locked out. |
-| `host:judge_buzzer` | Admin $\rightarrow$ Server | `{ pin, winnerTeamId, verdict: 'CORRECT' \| 'WRONG' \| 'PASS' }` | Host assigns marks or applies negative penalty. |
+| `player:buzz_ack` | Server $\rightarrow$ Winning Player | `{ status: 'WINNER', reactionTimeMs }` | The buzz acquired the atomic lock. |
+| `player:buzz_lockout` | Server $\rightarrow$ Player | `{ status: 'LOCKED_OUT' \| 'EXCLUDED' \| 'NOT_OPEN' \| 'NOT_JOINED', winnerTeamName }` | The buzz lost the race, or this team already attempted the question. |
+| `host:judge_buzzer` | Admin $\rightarrow$ Server | `{ pin, winnerTeamId, verdict: 'CORRECT' \| 'WRONG' \| 'PASS' }` | Host assigns marks or applies negative penalty. The server judges the team that actually holds the lock. CORRECT = +question points (default 100); WRONG = −50 % of that and the team is excluded; WRONG/PASS re-open the buzzer for the remaining teams. |
+| `sync:buzzer_judged` | Server $\rightarrow$ Room | `{ teamId, teamName, verdict, deltaPoints, newScore }` | Verdict broadcast. |
+| `sync:player_score` | Server $\rightarrow$ Single Player | `{ verdict, deltaPoints, currentScore, rank, totalTeams }` | Private score update for the judged team. |
+| `sync:buzzer_closed` | Server $\rightarrow$ Room | `{ reason: 'NO_ELIGIBLE_TEAMS', questionId }` | Every team has attempted; nobody left to buzz. |
+
+`sync:buzzer_ready` additionally carries `{ serverTime, roundId, reOpened, excludedTeamIds, correctPoints, penaltyPoints }`.
 
 ---
 
@@ -109,6 +127,9 @@ Communication is partitioned into distinct Socket.IO rooms by PIN (`room:pin`).
    - Any packet arriving after $T_{\text{question\_started}} + \text{TimeLimit} + 1000\text{ms}$ grace period is flagged as `EXPIRED` and awarded 0 points.
 3. **Atomic Answer Lock**:
    - In MongoDB, a unique compound index `{ roomId: 1, questionId: 1, participantId: 1 }` prevents concurrent double submissions from a single team.
+   - In memory, `submissionBuffer.ingest` performs the duplicate check and insert synchronously, so one team can never record two answers even before the batch reaches MongoDB.
+4. **Public REST payloads**:
+   - `GET /api/rooms/:pin/state` returns the full quiz (with answer keys) and participants only to an authenticated host. Anonymous callers (stage, players) get questions without `isCorrect`/`explanation` and participants without session tokens or phone numbers.
 
 ---
 
