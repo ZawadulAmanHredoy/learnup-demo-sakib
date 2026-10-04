@@ -21,7 +21,7 @@ All foundational specifications and plans are documented in the [`doc/`](./doc) 
 - ⚙️ [**TechSpec.md**](./doc/TechSpec.md) — WebSocket event protocol dictionary, zero-trust anti-cheat, and REST APIs.
 - ⚖️ [**DECISIONS.md**](./doc/DECISIONS.md) — Architecture Decision Records (ADRs) explaining core design choices.
 - 📏 [**Rules.md**](./doc/Rules.md) — Scoring formulas ($Base + SpeedBonus \times Streak$), negative marking, and buzzer rules.
-- 🗺️ [**ImplementationPlan.md**](./doc/ImplementationPlan.md) — Sprint roadmap and 2-person team division of responsibilities.
+- 🗺️ [**ImplementationPlan.md**](./doc/ImplementationPlan.md) — Sprint roadmap and 2-person full-stack vertical slice division.
 - ❓ [**INTERVIEW.md**](./doc/INTERVIEW.md) — Operational Q&A, network resilience strategies, and tournament day checklists.
 - 🚀 [**Modernize.md**](./doc/Modernize.md) — Future-proof enhancements (PWA, AI question generation, automated certificates).
 - 🧪 [**PROOFS.md**](./doc/PROOFS.md) — 500-socket concurrency benchmarks, atomic buzzer lockout proofs, and timer synchronization.
@@ -29,12 +29,14 @@ All foundational specifications and plans are documented in the [`doc/`](./doc) 
 
 ---
 
-## 👥 2-Person Team Division
+## 👥 2-Person Team Division (Full-Stack Vertical Slices)
 
-| Role | Domain Focus | Primary Responsibilities |
+Both developers work across **Node.js, Express, MongoDB, Socket.IO, and React**, each owning an entire user domain end-to-end:
+
+| Role | Domain Focus | Full-Stack Responsibilities |
 | :--- | :--- | :--- |
-| **Developer A** | **Backend & Real-Time Engine** | Node.js Express server, Socket.IO room FSM, MongoDB schemas, authoritative timer, atomic buzzer locks, scoring engine, and Excel/CSV export service. |
-| **Developer B** | **Frontend & UI/UX Experience** | React (Vite) setup, Tailwind design tokens, Host Cockpit UI, Stage Screen animations, Mobile Player client, audio SFX, and local session persistence. |
+| **Developer 1** | **Host Cockpit & Stage Broadcast** *(Full-Stack)* | **Backend**: Quiz & Question CRUD APIs, Room generation, State Machine emitters, Answer distribution analytics, Excel export service.<br>**Frontend**: Admin Quiz Editor, Host Live Cockpit, 4K Stage Screen (Projector), Response distribution charts, Leaderboard podium. |
+| **Developer 2** | **Player Experience & Live Engine** *(Full-Stack)* | **Backend**: Participant registration, In-memory submission ingest buffer, Server countdown timer, Scoring & Streak engine, Atomic buzzer lockout, Reconnection session recovery.<br>**Frontend**: Mobile Player PWA shell, Join form, 4-color tactile cards, Mobile Buzzer UI with haptics, Personal feedback & rank banners. |
 
 ---
 
@@ -47,8 +49,6 @@ All foundational specifications and plans are documented in the [`doc/`](./doc) 
 ---
 
 ## 🚀 Quick Start (Development)
-
-*(Detailed setup instructions will be updated upon Sprint 1 code scaffolding)*
 
 ```bash
 # Clone the repository

@@ -1,158 +1,121 @@
-# Implementation Plan & 2-Person Team Division (ImplementationPlan)
+# Implementation Plan & 2-Person Team Division (Vertical Full-Stack Slices)
 ## Project: LearnUp Live Arena
 
 ---
 
-## 1. Project Roadmap & Milestone Overview
+## 1. Vertical-Slice Engineering Strategy (Both Devs Full-Stack)
+
+Rather than splitting horizontally (Frontend vs. Backend), the project is divided into **two balanced, full-stack vertical slices**. 
+
+Both developers work across **Node.js, Express, MongoDB, Socket.IO, and React**, each owning a complete operational domain end-to-end:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   FULL-STACK VERTICAL SLICE DIVISION                   │
+├───────────────────────────────────┬────────────────────────────────────┤
+│           DEVELOPER 1             │            DEVELOPER 2             │
+│    Host Cockpit & Stage Broadcast │    Player Experience & Live Engine │
+│            (Full-Stack)           │             (Full-Stack)           │
+├───────────────────────────────────┼────────────────────────────────────┤
+│ BACKEND:                          │ BACKEND:                           │
+│ • Quiz & Question CRUD APIs       │ • Participant Auth & Reconnect     │
+│ • Room Lifecycle & PIN Generator  │ • Answer Submission Ingest Buffer  │
+│ • State Machine (FSM) Broadcasts  │ • Authoritative Server Timer       │
+│ • Aggregation & Distribution Calc │ • Scoring, Speed Bonus & Streaks   │
+│ • Excel / CSV Export Generator    │ • Atomic Buzzer Lockout Protocol   │
+│                                   │                                    │
+│ FRONTEND:                         │ FRONTEND:                          │
+│ • Admin Dashboard & Quiz Builder  │ • Mobile Player Join & PWA Shell   │
+│ • Host Live Cockpit Control Panel │ • 4-Color Tactile Touch Quadrant   │
+│ • Stage 4K Projector Display      │ • Mobile Buzzer UI & Haptic Engine │
+│ • Response Distribution Charts    │ • Real-time Feedback & Rank Banner │
+│ • Animated Leaderboard & Podium   │ • LocalStorage Session Resilience  │
+└───────────────────────────────────┴────────────────────────────────────┘
+```
+
+---
+
+## 2. Detailed Responsibility Breakdown
+
+### Developer 1: Host Orchestration & Stage Broadcast (Full-Stack)
+**Core Goal**: Everything the quiz host controls and everything the auditorium audience sees on the big screen.
+
+1. **Backend Responsibilities**:
+   - `Quiz` & `Question` Mongoose schemas and REST APIs (`GET`, `POST`, `PUT`, `DELETE /api/quizzes`).
+   - `Room` session generation (`POST /api/rooms` creating 6-digit PIN and initial state).
+   - Host socket command handlers:
+     - `host:start_question`, `host:lock_question`, `host:reveal_answer`, `host:show_leaderboard`.
+   - Computing answer distribution stats (`{ A: 45%, B: 15%, C: 35%, D: 5% }`) for the reveal stage.
+   - Comprehensive Excel / CSV export service (`/api/rooms/:pin/export`) using `exceljs`.
+2. **Frontend Responsibilities**:
+   - **Admin Management & Quiz Editor** (`/admin/quizzes`): Form to add questions, options, point values, timers, and media.
+   - **Host Live Cockpit** (`/admin/rooms/:pin/control`): Live telemetry gauge (submitted vs waiting), question cards, Next/Lock/Reveal buttons, pause timer, emergency kick/dispute overrides.
+   - **Stage / Projector Screen** (`/stage/:pin`):
+     - Lobby Screen: Giant QR code and floating team name chips.
+     - Question Screen: 48px readable fonts, circular SVG countdown ring, media clues.
+     - Reveal Screen: Animated horizontal bar chart highlighting the correct answer.
+     - Leaderboard & Podium: Top 10 sliding cards, rank movement indicators, and 1st/2nd/3rd confetti celebration canvas.
+
+---
+
+### Developer 2: Player Experience & Real-Time Engine (Full-Stack)
+**Core Goal**: Everything the contestant experiences on mobile and the real-time scoring/buzzer computation.
+
+1. **Backend Responsibilities**:
+   - `Participant` and `Submission` Mongoose schemas.
+   - Player socket connection lifecycle: `room:join`, `room:player_list` broadcast.
+   - Anti-cheat payload sanitizer: strips `isCorrect` from `sync:question_active` before transmitting.
+   - In-memory answer submission ingestion buffer (`player:submit_answer`) with sub-5ms acknowledgment.
+   - Authoritative server timer loop with client clock drift compensation.
+   - Scoring engine: $Base + SpeedBonus \times Streak$, negative marking deductions, and tie-breaking sort.
+   - Atomic Buzzer Lockout protocol (Node single-thread atomic lock or Redis SETNX) for Semi-Finals.
+   - Reconnection handler (`room:reconnect`) with UUID session token validation.
+2. **Frontend Responsibilities**:
+   - **Mobile Player Client Shell** (`/play`): Responsive mobile layout with PWA meta tags.
+   - **Team Join Form**: Inputs for Team Name, College/Institution, Captain Name, Phone.
+   - **Lobby Waiting Screen**: Animated pulse waiting card with team badge.
+   - **Interactive MCQ Screen**: 4-quadrant tactile colored buttons (Crimson, Cobalt, Amber, Emerald) with sound and haptic vibration (`navigator.vibrate`).
+   - **Locked State**: Immediate visual lock ("Answer Recorded! Waiting for others...").
+   - **Result Screen**: Success/Error animations, points breakdown (+Base, +Speed), streak multiplier flame, and personal rank position badge.
+   - **Mobile Buzzer UI**: Giant glowing buzzer button with sound and instant "LOCKED OUT" feedback.
+   - **Session Persistence**: Automatic recovery via `localStorage.getItem('sessionToken')`.
+
+---
+
+## 3. Sprint Roadmap & Team Milestones
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        DEVELOPMENT ROADMAP                             │
 ├─────────┬───────────────────────────────┬──────────────────────────────┤
-│ Sprint  │ Milestone                     │ Deliverable                  │
+│ Sprint  │ Developer 1 Deliverable       │ Developer 2 Deliverable      │
 ├─────────┼───────────────────────────────┼──────────────────────────────┤
-│ Sprint 1│ Foundation & Architecture     │ Monorepo, DB Schemas, Auth,  │
-│ (Days 1-3)                              │ Socket Protocol Skeleton     │
+│ Sprint 1│ Monorepo Setup + Quiz APIs +  │ Socket.IO Server Setup +     │
+│ (Days 1-3) Admin Login UI               │ Mobile Join Form & Socket Hook│
 ├─────────┼───────────────────────────────┼──────────────────────────────┤
-│ Sprint 2│ Core Synchronized MCQ Engine  │ State Machine (FSM), Timers, │
-│ (Days 4-7)                              │ Mobile Play & Admin Controls │
+│ Sprint 2│ Room Creation API + Host      │ Answer Ingestion Buffer +    │
+│ (Days 4-7) Cockpit UI + FSM Emitters    │ Mobile 4-Color MCQ UI        │
 ├─────────┼───────────────────────────────┼──────────────────────────────┤
-│ Sprint 3│ Stage Broadcast & Scoring     │ 4K Projector Display, Charts,│
-│ (Days 8-10)                             │ Leaderboard & Speed Bonuses  │
+│ Sprint 3│ Stage 4K Projector Screen +   │ Scoring Formula & Streaks +  │
+│ (Days 8-10) Distribution Charts & Podium│ Result Banners & Reconnect   │
 ├─────────┼───────────────────────────────┼──────────────────────────────┤
-│ Sprint 4│ Special Competition Rounds    │ Semi-Final Buzzer Lockout,   │
-│ (Days 11-13)                            │ Rapid-Fire 60s, Media Clues  │
+│ Sprint 4│ Excel Export Service + Host   │ Atomic Buzzer Lockout Engine │
+│ (Days 11-13) Emergency Overrides        │ + Mobile Buzzer UI           │
 ├─────────┼───────────────────────────────┼──────────────────────────────┤
-│ Sprint 5│ Hardening, Audits & Exports   │ Reconnection, Anti-Cheat,    │
-│ (Days 14-16)                            │ Excel Report Generator       │
-├─────────┼───────────────────────────────┼──────────────────────────────┤
-│ Sprint 6│ Rehearsal & Load Testing      │ 500-Socket Stress Simulation,│
-│ (Days 17-18)                            │ Stage Audio/Video Run-through│
-└─────────┴───────────────────────────────┴──────────────────────────────┘
+│ Sprint 5│ Joint 500-Socket Stress Test & Dress Rehearsal               │
+│ (Days 14-16)                                                           │
+└─────────┴──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. 2-Person Team Division of Responsibilities
+## 4. Contract-Driven Collaboration
 
-To ensure maximum development speed and zero blocked dependencies, the work is cleanly split across two distinct domain specializations:
+Because both developers work full-stack, they interface cleanly at the **WebSocket and API contract level**:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                 DEVELOPER A                     DEVELOPER B            │
-│         Backend & Real-Time Engine       Frontend & UI/UX Experience   │
-├────────────────────────────────────────────────────────────────────────┤
-│ • Node.js / Express Architecture         • React (Vite) App Setup      │
-│ • Socket.IO Engine & Event Handlers      • Tailwind Theme & CSS System │
-│ • Room Finite State Machine (FSM)        • Admin Host Cockpit UI       │
-│ • MongoDB Schemas & Mongoose Models      • Stage Projector 4K Screen   │
-│ • Authoritative Server Timer             • Mobile Player Client UI     │
-│ • Scoring & Streak Formula Engine        • Responsive Touch Buttons    │
-│ • Atomic Buzzer Lockout Concurrency      • Chart Animations (Recharts) │
-│ • Anti-Cheat Payload Sanitizer           • Audio SFX & Haptics         │
-│ • REST API Endpoints & Auth Middleware   • LocalStorage Token Recovery │
-│ • Excel / CSV Export Generator           • Confetti & Podium Animator  │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 3. Sprint-by-Sprint Work Breakdown
-
-### Sprint 1: Foundation, Data Contracts & Environment Setup
-- **Developer A (Backend)**:
-  - Initialize `backend/` project, Express server, and environment configuration.
-  - Setup MongoDB connection with Mongoose.
-  - Create Schemas: `User`, `Quiz`, `Question`, `Room`, `Participant`, `Submission`.
-  - Implement Auth API: `/api/auth/register`, `/api/auth/login`, and JWT middleware.
-  - Initialize Socket.IO instance with CORS and basic room join/leave logic.
-- **Developer B (Frontend)**:
-  - Initialize `frontend/` with Vite (React), TypeScript, and Tailwind CSS.
-  - Configure Design System: color tokens (Crimson, Cobalt, Amber, Emerald, Deep Space), typography (`Outfit` / `Inter`).
-  - Build common UI components: `Button`, `Input`, `Card`, `Modal`, `Badge`.
-  - Implement Client Router:
-    - `/admin/login` & `/admin/dashboard`
-    - `/stage/:pin`
-    - `/play`
-  - Setup Socket.IO client context and connection manager (`useSocket` hook).
-
-*Integration Checkpoint 1*: Developer B connects client socket to Developer A's server and verifies `room:join` and `room:player_list` broadcast.
-
----
-
-### Sprint 2: Core Real-Time Synchronized MCQ Gameplay
-- **Developer A (Backend)**:
-  - Implement Room Finite State Machine (`LOBBY` $\rightarrow$ `COUNTDOWN` $\rightarrow$ `QUESTION_ACTIVE` $\rightarrow$ `QUESTION_LOCKED` $\rightarrow$ `ANSWER_REVEAL` $\rightarrow$ `LEADERBOARD`).
-  - Implement Authoritative Server Countdown Timer (`setInterval` with drift correction).
-  - Implement `sync:question_active` with **answer stripping** (zero-trust security).
-  - Implement `player:submit_answer` handler with in-memory buffer and duplicate rejection.
-  - Implement answer evaluation and base points + speed bonus calculation.
-- **Developer B (Frontend)**:
-  - Build **Admin Host Cockpit** (`/admin/rooms/:pin/control`):
-    - Question viewer, live responses counter, "Next Question", "Lock", "Reveal" buttons.
-  - Build **Mobile Player Controller** (`/play`):
-    - Join form (Team Name, College, Captain, Phone).
-    - 4-quadrant tactile answer buttons matching universal colors.
-    - Locked submission state ("Answer Recorded").
-    - Result banner with correct/wrong feedback.
-
-*Integration Checkpoint 2*: Run a full 5-question mock MCQ game with Developer A running the host controls and Developer B playing on a mobile device.
-
----
-
-### Sprint 3: Stage Broadcast Display, Analytics & Leaderboards
-- **Developer A (Backend)**:
-  - Implement real-time leaderboard aggregation (Sorted Set logic / MongoDB aggregation).
-  - Calculate option distribution stats `{ A: 45%, B: 15%, C: 35%, D: 5% }`.
-  - Emit `sync:answer_reveal` and `sync:leaderboard` events.
-  - Persist submissions in batch to MongoDB upon question lock.
-- **Developer B (Frontend)**:
-  - Build **Stage Screen** (`/stage/:pin`):
-    - Lobby Screen with giant QR code generator (`qrcode.react`) and floating team chips.
-    - Active Question Screen with 48px fonts and circular SVG countdown ring.
-    - Reveal Screen with animated horizontal bar chart.
-    - Animated Leaderboard with sliding rank positions and streak badges.
-  - Integrate sound effects: tick, buzzer, correct, wrong, fanfare.
-
-*Integration Checkpoint 3*: Project Stage Screen onto a full-screen external monitor; verify latency and audio-visual synchronization during a mock round.
-
----
-
-### Sprint 4: Special Competition Rounds (Buzzer & Rapid Fire)
-- **Developer A (Backend)**:
-  - Implement **Buzzer Mode Protocol** (Semi-Finals):
-    - Single-thread atomic lockout logic.
-    - Host judgment endpoint (`host:judge_buzzer` with $+100$ or $-50$ negative penalty).
-    - Re-open buzzer event handler.
-  - Implement **Rapid-Fire Engine** (Grand Finale):
-    - 60-second continuous timer loop.
-    - Instant question cycling on `pass` or `submit`.
-- **Developer B (Frontend)**:
-  - Build **Mobile Buzzer UI**:
-    - Giant glowing, tactile buzzer button with vibration and touch sound.
-    - "LOCKED OUT" overlay when another team buzzes first.
-  - Build **Stage Buzzer & Rapid-Fire Screens**:
-    - Spotlights team that buzzed with reaction time in milliseconds.
-    - Rapid-fire 60-second timer bar and dynamic question feed.
-
-*Integration Checkpoint 4*: Test 6-device buzzer competition simulating concurrent taps within 10ms to verify zero race conditions.
-
----
-
-### Sprint 5: Resilience, Anti-Cheat, and Audit Reports
-- **Developer A (Backend)**:
-  - Implement `room:reconnect` with UUID session verification and state restoration.
-  - Create Excel / CSV export service using `exceljs` (`/api/rooms/:pin/export`).
-  - Implement rate limiting and input sanitization (`express-mongo-sanitize`).
-- **Developer B (Frontend)**:
-  - Implement `localStorage` session persistence on mobile player client.
-  - Build Post-Round Admin Report Viewer and one-click "Download Excel Report" button.
-  - Build Final Podium celebration with celebratory confetti (`canvas-confetti`).
-
----
-
-### Sprint 6: Load Testing, Rehearsal & Pre-Ship Audit
-- **Both Developers**:
-  - Run 500-client simulated socket stress test script (`scratch/load_test.js`).
-  - Full end-to-end dress rehearsal of the complete BUFT National Quiz Tournament flow (Round 2 $\rightarrow$ Quarter Final $\rightarrow$ Semi-Final Buzzer $\rightarrow$ Grand Finale).
-  - Final code review, pre-ship checklist sign-off, and deployment setup.
+1. **Shared Event Definitions**: Documented in [TechSpec.md](./TechSpec.md).
+   - Dev 1 emits `sync:question_active` $\rightarrow$ Dev 2's mobile UI renders it.
+   - Dev 2 emits `player:submit_answer` $\rightarrow$ Dev 2's backend scores it $\rightarrow$ Dev 1's stage chart displays the aggregate counts.
+2. **Independent Testing**:
+   - Dev 1 can test the Host Cockpit & Stage Screen by firing mock socket events without waiting for mobile players.
+   - Dev 2 can test Mobile Player answering and buzzer clicks using automated mock host triggers.
