@@ -69,18 +69,20 @@ setupGameSockets(io);
 // Connect DB and Start HTTP Server
 const PORT = process.env.PORT || 5000;
 
-async function startServer() {
+async function startServer(port = PORT) {
   await connectDB();
   await storageService.seedDatabase();
 
-  server.listen(PORT, () => {
+  return new Promise(resolve => server.listen(port, () => {
+    const boundPort = server.address().port;
     console.log(`\n=============================================================`);
-    console.log(`🚀 LearnUp Live Arena Server running on port ${PORT}`);
-    console.log(`📍 Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🚀 LearnUp Live Arena Server running on port ${boundPort}`);
+    console.log(`📍 Health Check: http://localhost:${boundPort}/api/health`);
     console.log(`📡 Socket.IO Real-time Engine initialized`);
     console.log(`👤 Default Admin: admin@learnup.com | Password: admin123`);
     console.log(`=============================================================\n`);
-  });
+    resolve(server);
+  }));
 }
 
 // Graceful Shutdown Handlers (Section 4.14)
@@ -100,6 +102,8 @@ process.on('SIGINT', () => {
   });
 });
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
 
-module.exports = { app, server, io };
+module.exports = { app, server, io, startServer };

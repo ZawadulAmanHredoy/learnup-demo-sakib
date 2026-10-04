@@ -6,11 +6,11 @@ const {
   getRoomState,
   exportRoomResults,
 } = require('../controllers/roomController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, optionalAuth } = require('../middleware/authMiddleware');
 
 router.post('/', protect, createRoom);
 router.get('/:pin', getRoomByPin);
-router.get('/:pin/state', getRoomState);
+router.get('/:pin/state', optionalAuth, getRoomState);
 router.get('/:pin/export', exportRoomResults);
 
 module.exports = router;

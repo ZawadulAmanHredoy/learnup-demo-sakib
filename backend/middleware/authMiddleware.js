@@ -41,6 +41,21 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Attaches req.user when a valid host token is present; never rejects the request.
+// Used by endpoints that serve both the host (full data) and public screens (sanitized data).
+const optionalAuth = async (req, res, next) => {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) return next();
+  try {
+    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'learnup_live_arena_secret_jwt_key_2025_academic_tournament');
+    const user = await storageService.findUserById(decoded.id);
+    if (user) req.user = user;
+  } catch (error) {
+    // Invalid token: fall through as an anonymous viewer
+  }
+  next();
+};
+
 const requireHostOrAdmin = (req, res, next) => {
   if (!req.user || !['superadmin', 'host', 'moderator'].includes(req.user.role)) {
     return res.status(403).json({
@@ -54,5 +69,6 @@ const requireHostOrAdmin = (req, res, next) => {
 
 module.exports = {
   protect,
+  optionalAuth,
   requireHostOrAdmin,
 };

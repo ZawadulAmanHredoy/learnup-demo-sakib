@@ -1,5 +1,24 @@
 const storageService = require('../services/storageService');
 const { generateRoomReportExcel } = require('../services/exportService');
+const { sanitizeQuestion, publicParticipant } = require('../services/liveEngine');
+
+// Anti-cheat (ADR-004): anonymous viewers (stage, players) never receive answer keys or session tokens
+function sanitizeQuizForPublic(quiz) {
+  if (!quiz) return quiz;
+  const plain = typeof quiz.toObject === 'function' ? quiz.toObject() : quiz;
+  return {
+    ...plain,
+    questions: (plain.questions || []).map(q => ({ _id: q._id, orderIndex: q.orderIndex, ...sanitizeQuestion(q) })),
+  };
+}
+
+function sanitizeRoomForPublic(room) {
+  const plain = typeof room.toObject === 'function' ? room.toObject() : { ...room };
+  if (plain.quizId && typeof plain.quizId === 'object') {
+    plain.quizId = plain.quizId._id;
+  }
+  return plain;
+}
 
 // Helper to generate unique 6-digit numeric PIN
 function generateNumericPin() {
@@ -146,13 +165,14 @@ const getRoomState = async (req, res) => {
     }
 
     const participants = await storageService.getParticipantsByPin(pin);
+    const isHost = !!req.user;
 
     return res.status(200).json({
       success: true,
       data: {
-        room,
-        quiz,
-        participants,
+        room: isHost ? room : sanitizeRoomForPublic(room),
+        quiz: isHost ? quiz : sanitizeQuizForPublic(quiz),
+        participants: isHost ? participants : participants.map(publicParticipant),
       },
       error: null,
     });

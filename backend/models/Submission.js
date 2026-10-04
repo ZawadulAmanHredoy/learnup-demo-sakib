@@ -4,6 +4,8 @@ const SubmissionSchema = new mongoose.Schema({
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true, index: true },
   questionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Question', required: true, index: true },
   participantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Participant', required: true, index: true },
+  pin: { type: String, index: true },
+  teamName: { type: String },
   selectedOptionId: { type: String, required: true },
   
   clientSentAt: { type: Date },
@@ -13,6 +15,8 @@ const SubmissionSchema = new mongoose.Schema({
   isCorrect: { type: Boolean, required: true },
   basePoints: { type: Number, default: 0 },
   speedBonusPoints: { type: Number, default: 0 },
+  streakBonusPoints: { type: Number, default: 0 },
+  streakMultiplier: { type: Number, default: 1 },
   penaltyPoints: { type: Number, default: 0 },
   totalPointsAwarded: { type: Number, required: true }
 }, { timestamps: true });

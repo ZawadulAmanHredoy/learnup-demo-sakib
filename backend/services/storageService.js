@@ -485,6 +485,52 @@ const storageService = {
     return null;
   },
 
+  // Case-insensitive team name lookup (includes disqualified teams so a kicked name can't be reused)
+  async findParticipantByTeamName(pin, teamName) {
+    const target = String(teamName || '').trim().toLowerCase();
+    if (isDbConnected()) {
+      const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return await Participant.findOne({ pin, teamName: { $regex: `^${escaped}$`, $options: 'i' } }).lean();
+    }
+    for (const p of memoryStore.participants.values()) {
+      if (p.pin === pin && String(p.teamName).trim().toLowerCase() === target) {
+        return p;
+      }
+    }
+    return null;
+  },
+
+  async countParticipants(pin) {
+    if (isDbConnected()) {
+      return await Participant.countDocuments({ pin, isDisqualified: false });
+    }
+    return Array.from(memoryStore.participants.values())
+      .filter(p => p.pin === pin && !p.isDisqualified).length;
+  },
+
+  /**
+   * Apply many participant updates in one round-trip (score flush after each question).
+   * @param {Array<{ id: string, update: Object }>} updates
+   */
+  async bulkUpdateParticipants(updates) {
+    if (!updates.length) return;
+    if (isDbConnected()) {
+      await Participant.bulkWrite(
+        updates.map(({ id, update }) => ({
+          updateOne: { filter: { _id: id }, update: { $set: update } },
+        })),
+        { ordered: false }
+      );
+      return;
+    }
+    for (const { id, update } of updates) {
+      const part = memoryStore.participants.get(id);
+      if (part) {
+        memoryStore.participants.set(id, { ...part, ...update, updatedAt: new Date() });
+      }
+    }
+  },
+
   async createParticipant(partData) {
     if (isDbConnected()) {
       return await Participant.create(partData);
@@ -498,6 +544,8 @@ const storageService = {
       correctAnswersCount: 0,
       incorrectAnswersCount: 0,
       averageResponseTimeMs: 0,
+      cumulativeResponseTimeMs: 0,
+      bestQuestionScore: 0,
       isDisqualified: false,
       isConnected: true,
       createdAt: new Date(),
@@ -526,6 +574,53 @@ const storageService = {
     return Array.from(memoryStore.submissions.values()).filter(s => s.questionId === questionId && s.pin === pin);
   },
 
+  // Bulk persist a drained submission buffer (ADR-003: one insertMany per question)
+  async insertSubmissions(records) {
+    if (!records.length) return [];
+    if (isDbConnected()) {
+      try {
+        return await Submission.insertMany(records, { ordered: false });
+      } catch (err) {
+        // Duplicate-key errors (unique room/question/participant index) are expected on replays
+        console.error('⚠️ [Submission insertMany]', err.message);
+        return err.insertedDocs || [];
+      }
+    }
+    return records.map(r => {
+      const newSub = { _id: `sub_${uuidv4().substring(0, 8)}`, ...r, createdAt: new Date() };
+      memoryStore.submissions.set(newSub._id, newSub);
+      return newSub;
+    });
+  },
+
+  async getSubmissionsByPin(pin) {
+    if (isDbConnected()) {
+      return await Submission.find({ pin }).lean();
+    }
+    return Array.from(memoryStore.submissions.values()).filter(s => s.pin === pin);
+  },
+
+  // Buzzer audit log (Semi-Final)
+  async createBuzzerLog(logData) {
+    if (isDbConnected()) {
+      return await BuzzerLog.create(logData);
+    }
+    const newLog = { _id: `bzl_${uuidv4().substring(0, 8)}`, ...logData, createdAt: new Date() };
+    memoryStore.buzzerLogs.set(newLog._id, newLog);
+    return newLog;
+  },
+
+  async updateBuzzerLog(id, updateData) {
+    if (isDbConnected()) {
+      return await BuzzerLog.findByIdAndUpdate(id, updateData, { new: true });
+    }
+    const log = memoryStore.buzzerLogs.get(id);
+    if (!log) return null;
+    const updated = { ...log, ...updateData };
+    memoryStore.buzzerLogs.set(id, updated);
+    return updated;
+  },
+
   async createSubmission(subData) {
     if (isDbConnected()) {
       return await Submission.create(subData);
@@ -552,7 +647,7 @@ const storageService = {
     }
 
     const participants = await this.getParticipantsByPin(pin);
-    const submissions = Array.from(memoryStore.submissions.values()).filter(s => s.pin === pin);
+    const submissions = await this.getSubmissionsByPin(pin);
 
     return {
       room,
