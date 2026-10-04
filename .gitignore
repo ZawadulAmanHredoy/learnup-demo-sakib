@@ -7,12 +7,16 @@ node_modules/
 /coverage
 
 # Production Build artifacts
-/dist
-/build
-/out
+dist/
+build/
+out/
 
 # Environment variables
 .env
+*.env
+backend/.env
+env-secret.txt
+.env.local
 .env.local
 .env.development.local
 .env.test.local

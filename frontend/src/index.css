@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-deep-space: #0A0F1D;
+  --bg-surface-card: #131D31;
+  --bg-surface-elevated: #1E2B45;
+  --border-subtle: #2A3B5C;
+
+  --color-option-a: #EF4444;
+  --color-option-b: #3B82F6;
+  --color-option-c: #F59E0B;
+  --color-option-d: #10B981;
+
+  --accent-gold: #FACC15;
+  --accent-silver: #CBD5E1;
+  --accent-bronze: #F97316;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-deep-space);
+  color: #F8FAFC;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Glassmorphism primitives */
+.glass-panel {
+  background: rgba(19, 29, 49, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 59, 92, 0.6);
+}
+
+.glass-panel-elevated {
+  background: rgba(30, 43, 69, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+/* Glowing text effects */
+.text-glow-gold {
+  text-shadow: 0 0 20px rgba(250, 204, 21, 0.5), 0 0 40px rgba(250, 204, 21, 0.2);
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.3);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0F1D;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A3B5C;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3B82F6;
+}
