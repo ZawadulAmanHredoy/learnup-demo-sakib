@@ -21,29 +21,40 @@ The system supports standard multi-round MCQs, fast-paced Buzzer rounds with neg
 
 ---
 
-## 3. Tournament Phases (Derived from BUFT Competition Flow)
+## 3. Tournament Phases (Official 5-Tier Competition Structure)
 
-The platform is designed to seamlessly run four distinct tournament tiers as specified in the event roadmap:
+The platform is designed to seamlessly run the 5 distinct tournament tiers as specified in the official competition roadmap:
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        TOURNAMENT ROUND PHASES                         │
-├───────────────────┬───────────────────┬────────────────────────────────┤
-│ Round Type        │ Participants      │ Core Rules & Mechanics         │
-├───────────────────┼───────────────────┼────────────────────────────────┤
-│ 1. Preliminary    │ 133+ Teams        │ Self-paced or bulk online MCQ  │
-│    Screening      │ (399+ persons)    │ 50 MCQs, timed audit log       │
-├───────────────────┼───────────────────┼────────────────────────────────┤
-│ 2. Round 2 &      │ 133 Teams ->      │ Host-synchronized live MCQ     │
-│    Quarter Final  │ 20 Teams          │ 30-50 MCQs, Speed bonus points │
-├───────────────────┼───────────────────┼────────────────────────────────┤
-│ 3. Semi Final     │ 6 Teams           │ Synchronized Buzzer Lockout    │
-│    (Podium Switch)│ (18 persons)      │ First to buzz locks out others │
-│                   │                   │ Negative marking (-50%)        │
-├───────────────────┼───────────────────┼────────────────────────────────┤
-│ 4. Grand Finale   │ 4 Finalist Teams  │ Audio/Visual Clues +           │
-│                   │ (12 persons)      │ Rapid Fire (60 sec, 30 Qs)     │
-└───────────────────┴───────────────────┴────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           OFFICIAL 5-TIER TOURNAMENT ROUNDS                     │
+├────────────────────┬────────────────────┬───────────────────────────────────────┤
+│ Tier / Round       │ Participants       │ Core Rules & Mechanics                │
+├────────────────────┼────────────────────┼───────────────────────────────────────┤
+│ 1. National        │ Nationwide Teams   │ Online / College Screening:           │
+│    Qualifying      │ (Hundreds)         │ Image, Video, Audio & Current Affairs │
+├────────────────────┼────────────────────┼───────────────────────────────────────┤
+│ 2. Campus MCQ      │ Selected Teams     │ Host-Synchronized Campus Live MCQ:    │
+│    Quick Quiz      │ (133 Teams / 399p) │ 50 Questions | 30 Minutes             │
+│                    │                    │ ➔ Top 20 Teams advance to Quarterfinal │
+├────────────────────┼────────────────────┼───────────────────────────────────────┤
+│ 3. Quarter Final   │ 20 Teams           │ 5 Categorized Segments:               │
+│    (5 Segments)    │ (60 persons)       │ A: Bangladesh, B: World,              │
+│                    │                    │ C: Science & Tech, D: History/Culture,│
+│                    │                    │ E: Sports & Current Affairs           │
+│                    │                    │ ➔ Top 6 Teams advance to Semifinal   │
+├────────────────────┼────────────────────┼───────────────────────────────────────┤
+│ 4. Semifinal       │ 6 Teams            │ Synchronized Buzzer Lockout:          │
+│    (Buzzer Round)  │ (18 persons)       │ First to buzz locks out other 5 teams │
+│                    │                    │ Correct = +Points, Wrong = -Negative  │
+│                    │                    │ ➔ Top 4 Teams advance to Grand Finale │
+├────────────────────┼────────────────────┼───────────────────────────────────────┤
+│ 5. Grand Finale    │ 4 Finalist Teams   │ Segment A: Audio-Visual Clues         │
+│                    │ (12 persons)       │   (10s video clips, photos, music)    │
+│                    │                    │ Segment B: Rapid-Fire Showdown        │
+│                    │                    │   (60s per team, +10 / 0 / Pass)      │
+│                    │                    │ ➔ Champion, 1st & 2nd Runner-up       │
+└────────────────────┴────────────────────┴───────────────────────────────────────┘
 ```
 
 ---

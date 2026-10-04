@@ -49,46 +49,57 @@ Negative marking is toggled per round or per question:
 
 ---
 
-## 2. Round-Specific Tournament Rules (BUFT Flow)
+## 2. Official 5-Tier Tournament Rules
 
-### 2.1 Round 2: Team MCQ Screening (133 Teams / 399 Persons)
-- **Format**: 50 MCQs.
-- **Time per Question**: 20 seconds.
-- **Negative Marking**: Disabled.
-- **Speed Bonus**: Enabled.
+### 2.1 Round 1: National Qualifying Round (Nationwide / Online)
+- **Format**: Image + Video + Audio + General Knowledge.
+- **Topics**: Bangladesh, International, History, Literature, Culture, Science, ICT, Geography, Sports, Current Affairs.
+- **Objective**: Identify top candidate teams nationwide to visit campus.
+
+### 2.2 Round 2: Campus MCQ Quick Quiz (133 Teams / 399 Persons)
+- **Format**: 50 Questions | 30 Minutes.
+- **Environment**: BUFT Campus live MCQ with selected participants/teams.
 - **Advancement Threshold**: Top 20 teams advance to Quarter Finals.
 
-### 2.2 Quarter Finals: High-Pressure MCQ (20 Teams / 60 Persons)
-- **Format**: 30 MCQs.
-- **Time per Question**: 15 seconds.
-- **Negative Marking**: Enabled ($-25\text{ pts}$ on 100-pt base).
-- **Speed Bonus**: Enabled.
-- **Advancement Threshold**: Top 6 teams advance to Semi-Finals.
+### 2.3 Round 3: Quarter Finals (20 Teams / 60 Persons)
+- **Focus**: Testing Knowledge + Speed + Accuracy across 5 distinct segments:
+  - **Segment A**: Bangladesh Round
+  - **Segment B**: World / International Affairs
+  - **Segment C**: Science & Technology (Science + ICT)
+  - **Segment D**: History & Culture (History + Literature + Culture)
+  - **Segment E**: Sports & Current Affairs
+- **Advancement Threshold**: Top 6 teams advance to Semifinals.
 
-### 2.3 Semi-Finals: Buzzer / Podium Switch Round (6 Teams / 18 Persons)
-- **Format**: 30 MCQs, Buzzer Lockout.
+### 2.4 Round 4: Semifinals — Buzzer Round (6 Teams / 18 Persons)
+- **Format**: Buzzer Question Lockout.
 - **Mechanics**:
   1. Question is read aloud or displayed on the auditorium stage screen.
   2. Buzzer opens. Contestants hit the mobile buzzer button.
-  3. First team to buzz locks the floor for all other teams.
-  4. Team has 10 seconds to verbally state their answer.
+  3. First team to buzz locks the floor for all other teams with sub-millisecond precision.
+  4. Team verbally delivers their answer to the host.
   5. **Host Judgment**:
-     - If **Correct**: $+100\text{ points}$.
-     - If **Incorrect**: $-50\text{ points}$ (Negative penalty).
-  6. **Re-Open Buzzer**: If the first team is wrong, host clicks "Pass/Re-open". The question is reopened for the remaining 5 teams.
+     - If **Correct**: Positive marks (+Base Points).
+     - If **Incorrect**: Negative marks (-Penalty Points).
+  6. **Re-Open Buzzer**: If first team fails, host can re-open the question for the remaining 5 teams.
 - **Advancement Threshold**: Top 4 teams advance to the Grand Finale.
 
-### 2.4 Grand Finale: Audio/Visual & Rapid Fire (4 Teams / 12 Persons)
-- **Phase A: Audio / Visual Round**:
-  - 10 Audio / Visual clue questions.
-  - 30 seconds per question.
-  - $+150\text{ points}$ for correct answer.
-- **Phase B: Rapid Fire Round (The Final Showdown)**:
-  - Each team takes the hot seat individually.
-  - **Master Timer**: Strictly 60 seconds countdown.
-  - **Question Bank**: 30 rapid-fire questions queued.
-  - Contestant can tap: `Answer` (Correct = $+50$), `Pass` (0 pts), or `Wrong` ($-25$ pts).
-  - System cycles questions instantaneously until the 60s expires.
+### 2.5 Round 5: Grand Finale (4 Finalist Teams / 12 Persons)
+- **Segment A: Audio-Visual Round**:
+  - Questions rendered on the central auditorium projector/screen.
+  - Question types: 10-second video clips, historical photographs, famous persons, places, logos, flags, movies, audio/music snippets, and sports moments.
+- **Segment B: Rapid-Fire Round (60 Seconds per Team)**:
+  - Each finalist team takes the stage hot seat individually.
+  - **Timer**: Exactly 60 seconds master countdown.
+  - **Host Action**: Host fires rapid-fire questions continuously.
+  - **Official Scoring Rules**:
+    - **Correct**: $+10\text{ points}$
+    - **Wrong**: $0\text{ points}$ (No negative penalty in Rapid-Fire!)
+    - **Pass**: Allowed (Host moves immediately to next question)
+    - **Time Up**: Segment concludes immediately when 60s expires.
+- **Final Result**:
+  - 🥇 **Champion**
+  - 🥈 **1st Runner-up**
+  - 🥉 **2nd Runner-up**
 
 ---
 

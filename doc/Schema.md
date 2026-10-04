@@ -103,9 +103,24 @@ const QuestionSchema = new mongoose.Schema({
     enum: ['MCQ', 'BUZZER', 'AUDIO_VISUAL', 'RAPID_FIRE'], 
     default: 'MCQ' 
   },
+  segment: {
+    type: String,
+    enum: [
+      'GENERAL',
+      'BANGLADESH',
+      'WORLD',
+      'SCIENCE_TECH',
+      'HISTORY_CULTURE',
+      'SPORTS_AFFAIRS',
+      'AUDIO_VISUAL',
+      'RAPID_FIRE'
+    ],
+    default: 'GENERAL'
+  },
   media: {
     type: { type: String, enum: ['NONE', 'IMAGE', 'AUDIO', 'VIDEO'], default: 'NONE' },
-    url: { type: String, default: null }
+    url: { type: String, default: null },
+    durationSec: { type: Number, default: 10 } // e.g. 10-second video clip
   },
   options: { 
     type: [OptionSchema], 
